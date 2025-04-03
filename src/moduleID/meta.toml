@@ -1,0 +1,16 @@
+type = "module" # or "modules"
+modules = ['moduleID'] # if type is "modules", this should be a list of module IDs 
+
+# if type is "module": 
+id="sampleModuleID" # module ID, should be unique in the system
+name="Sample Module" # updated name for clarity
+version="0.1.0" # version of the module
+versionCode=25040301 # unique version code
+description="sample" # description of the module
+author="LIghtJUNction" # author of the module
+updateJson="https://.../update.json" # URL for update information
+license="MIT" # license type
+
+dependencies = [
+]
+
