@@ -6,12 +6,23 @@ on:
       new_id:
         description: '新的模块 ID'
         required: true
+      name:
+        description: '模块名称（不填则使用模块 ID）'
+        required: false
       description:
         description: '模块描述'
         required: true
       author:
         description: '模块作者'
         required: true
+      type:
+        description: '模块类型（module: 单一模块，modules: 多模块包）'
+        required: true
+        default: 'module'
+        type: choice
+        options:
+        - module
+        - modules
 
 jobs:
   initialize:
@@ -35,8 +46,10 @@ jobs:
         run: |
           python .github/scripts/initialize_module.py \
             --new_id "${{ github.event.inputs.new_id }}" \
+            --name "${{ github.event.inputs.name }}" \
             --description "${{ github.event.inputs.description }}" \
-            --author "${{ github.event.inputs.author }}"
+            --author "${{ github.event.inputs.author }}" \
+            --type "${{ github.event.inputs.type }}"
         
       - name: Set up Git
         run: |
@@ -66,8 +79,10 @@ jobs:
           name: Initial Release v0.0.0
           body: |
             初始化模块: ${{ github.event.inputs.new_id }}
+            模块名称: ${{ github.event.inputs.name || github.event.inputs.new_id }}
             描述: ${{ github.event.inputs.description }}
             作者: ${{ github.event.inputs.author }}
+            类型: ${{ github.event.inputs.type }}
           draft: false
           prerelease: false
         env:

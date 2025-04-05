@@ -5,6 +5,7 @@ import argparse
 import datetime
 import zipfile
 import glob
+import json
 
 def main():
     parser = argparse.ArgumentParser(description='Package AIVK module')
@@ -49,7 +50,8 @@ def main():
         f"{module_id}.py" if os.path.exists(f"{module_id}.py") else None,
         'pyproject.toml' if os.path.exists('pyproject.toml') else None,
         'README.md' if os.path.exists('README.md') else None,
-        'LICENSE' if os.path.exists('LICENSE') else None
+        'LICENSE' if os.path.exists('LICENSE') else None,
+        'CHANGELOG.MD' if os.path.exists('CHANGELOG.MD') else None
     ]
     
     # 过滤掉不存在的文件
@@ -67,16 +69,23 @@ def main():
                 zipf.write(file)
     
     # 更新 update.json
+    repo_owner_name = os.environ.get('GITHUB_REPOSITORY', '').split('/')
+    if len(repo_owner_name) == 2:
+        repo_owner, repo_name = repo_owner_name
+    else:
+        repo_owner = 'owner'
+        repo_name = module_id
+    
     update_json = {
         "version": args.version,
         "versionCode": version_code,
-        "url": f"https://github.com/{os.environ.get('GITHUB_REPOSITORY', '')}/releases/download/v{args.version}/{module_id}.zip",
-        "changelog": args.changelog
+        "zipUrl": f"https://github.com/{repo_owner}/{repo_name}/releases/download/v{args.version}/{module_id}.zip",
+        "changelog": f"https://github.com/{repo_owner}/{repo_name}/blob/main/CHANGELOG.MD"
     }
     
     with open('update.json', 'w', encoding='utf-8') as f:
-        import json
-        json.dump(update_json, f, ensure_ascii=False, indent=2)
+        # 使用 indent=4 以保持格式一致
+        json.dump(update_json, f, ensure_ascii=False, indent=4)
     
     print(f"模块已打包为: {zip_filename}")
     print(f"版本: {args.version}")
