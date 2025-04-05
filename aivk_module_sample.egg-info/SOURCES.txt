@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+./moduleID.py
+aivk_module_sample.egg-info/PKG-INFO
+aivk_module_sample.egg-info/SOURCES.txt
+aivk_module_sample.egg-info/dependency_links.txt
+aivk_module_sample.egg-info/requires.txt
+aivk_module_sample.egg-info/top_level.txt

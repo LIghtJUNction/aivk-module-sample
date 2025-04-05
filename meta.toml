@@ -11,6 +11,10 @@ author="LIghtJUNction" # author of the module
 updateJson="https://.../update.json" # URL for update information
 license="MIT" # license type
 
+# - import: 作为模块导入(在同一进程中运行) 建议核心模块使用此模式 方便通信
+# - process: 在独立进程中启动 建议非核心模块使用此模式 方便调试和隔离 可以使用独立的python环境
+startMode="import"
+
 dependencies = [
 ]
-
+# "moduleID:>=0.1.0" # moduleID:>=0.1.0 or :== :<= :>= :<= :!=

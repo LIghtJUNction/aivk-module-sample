@@ -4,9 +4,19 @@ version = "0.1.0"
 description = "aivk-module-sample"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-    "aivk",
+license = "MIT"
+authors = [
+    {name = "LIghtJUNction", email = "LIghtJUNction.me@gmail.com"}
 ]
 
-[tool.uv.sources]
-aivk = { path = "../AIVK", editable = true }
+dependencies = [
+    "aivk>=0.1.0",
+]
+
+[build-system]
+requires = ["setuptools>=77.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+

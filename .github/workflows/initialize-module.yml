@@ -1,0 +1,74 @@
+name: Initialize Module
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_id:
+        description: '新的模块 ID'
+        required: true
+      description:
+        description: '模块描述'
+        required: true
+      author:
+        description: '模块作者'
+        required: true
+
+jobs:
+  initialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install toml python-dateutil
+
+      - name: Initialize module
+        id: init
+        run: |
+          python .github/scripts/initialize_module.py \
+            --new_id "${{ github.event.inputs.new_id }}" \
+            --description "${{ github.event.inputs.description }}" \
+            --author "${{ github.event.inputs.author }}"
+        
+      - name: Set up Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+      
+      - name: Commit changes
+        run: |
+          git add .
+          git commit -m "Initialize module: ${{ github.event.inputs.new_id }}"
+      
+      - name: Create tag
+        run: |
+          git tag -a v0.0.0 -m "Initial version 0.0.0"
+          
+      - name: Push changes and tags
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v0.0.0
+          name: Initial Release v0.0.0
+          body: |
+            初始化模块: ${{ github.event.inputs.new_id }}
+            描述: ${{ github.event.inputs.description }}
+            作者: ${{ github.event.inputs.author }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
