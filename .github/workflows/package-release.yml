@@ -98,6 +98,7 @@ jobs:
             echo "更改已提交"
           else
             echo "没有需要提交的更改"
+          fi
       
       - name: Create tag
         if: steps.check_tag.outputs.exists != 'true'
@@ -114,6 +115,7 @@ jobs:
             git push origin HEAD:${{ github.ref }} || echo "推送代码失败，可能是远程分支有更新，继续执行工作流"
           else
             echo "没有需要推送的更改"
+          fi
           
           # 尝试推送标签，忽略错误
           git push origin --tags || echo "推送标签失败，可能是标签已存在，继续执行工作流"
