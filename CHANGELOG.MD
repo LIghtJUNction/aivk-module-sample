@@ -1,15 +1,18 @@
 # Changelog / 更新日志
 
-## [0.1.0] - 2025-04-06
+## [0.0.0] - 2025-04-05
 
 ### 中文
 
 #### 新增
-- 初始版本发布
-- 添加多语言文档支持
+- 初始版本
+- sample
+- 启动模式: import
 
 
 ### English
 
 #### Added
 - Initial release
+- sample
+- Start mode: import

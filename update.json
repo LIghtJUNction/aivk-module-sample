@@ -1,6 +1,6 @@
-{    
-    "version": "0.1.0",
-    "versionCode": 25040301,
-    "zipUrl": "https://github.com/LIghtJUNction/aivk-module-sample/releases/download/v0.1.0/aivk-module-sample-0.1.0.zip",
-    "changelog": "https://github.com/LIghtJUNction/aivk-module-sample/blob/CHANGELOG.MD"
+{
+    "version": "0.0.0",
+    "versionCode": 25040501,
+    "zipUrl": "https://github.com/LIghtJUNction/aivk-module-sample/releases/download/v0.0.0/sample_module_id.zip",
+    "changelog": "https://github.com/LIghtJUNction/aivk-module-sample/blob/main/CHANGELOG.MD"
 }
