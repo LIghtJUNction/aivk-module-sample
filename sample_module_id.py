@@ -9,12 +9,12 @@ logger = logging.getLogger("aivk.example_module")
 
 class Entry(LKM):
     """
-    Module ID : example_module
-    Module Name : Example Module
-    Module Version : 0.1.0
+    Module ID : sample_module_id
+    Module Name : module name
+    Module Version : 0.0.0
     Module Author : LIghtJUNction
     Module License : MIT
-    Module Description : Example module for AIVK
+    Module Description : sample
 
     pls implement the following methods:
     why don't implement the onLoad, onUnload, onInstall, onUninstall, onUpdate methods?

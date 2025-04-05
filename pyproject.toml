@@ -1,22 +1,18 @@
 [project]
-name = "aivk-module-sample"
-version = "0.1.0"
-description = "aivk-module-sample"
+name = "sample_module_id"
+version = "0.0.0"
+description = "sample"
 readme = "README.md"
 requires-python = ">=3.13"
 license = "MIT"
-authors = [
-    {name = "LIghtJUNction", email = "LIghtJUNction.me@gmail.com"}
-]
-
-dependencies = [
-    "aivk>=0.1.0",
-]
+dependencies = [ "aivk>=0.1.0",]
+[[project.authors]]
+name = "LIghtJUNction"
+email = "LIghtJUNction.me@gmail.com"
 
 [build-system]
-requires = ["setuptools>=77.0.0", "wheel"]
+requires = [ "setuptools>=77.0.0", "wheel",]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-package-dir = {"" = "."}
-
+[tool.setuptools.package-dir]
+"" = "."
