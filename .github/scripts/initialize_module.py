@@ -15,6 +15,8 @@ def main():
     parser.add_argument('--name', help='Module name (defaults to new_id if not provided)')
     parser.add_argument('--type', choices=['module', 'modules'], default='module',
                        help='Module type: "module" for single module or "modules" for multiple modules package')
+    parser.add_argument('--start_mode', choices=['import', 'process'], default='import',
+                       help='Start mode: "import" for importing as module in same process, "process" for running in separate process')
     args = parser.parse_args()
     
     # 读取 meta.toml
@@ -32,6 +34,7 @@ def main():
     meta_data['description'] = args.description
     meta_data['author'] = args.author
     meta_data['version'] = '0.0.0'
+    meta_data['startMode'] = args.start_mode
     
     # 生成版本代号 (年月日序列)
     now = datetime.datetime.now()
@@ -65,10 +68,6 @@ def main():
             elif 'GPL' in first_line:
                 meta_data['license'] = 'GPL-3.0'
             # 其他许可证类型...
-    
-    # 默认设置启动模式
-    if 'startMode' not in meta_data:
-        meta_data['startMode'] = 'import'
     
     # 写回 meta.toml
     with open(meta_path, 'w', encoding='utf-8') as f:
@@ -160,6 +159,7 @@ def main():
 #### 新增
 - 初始版本
 - {args.description}
+- 启动模式: {args.start_mode}
 
 
 ### English
@@ -167,6 +167,7 @@ def main():
 #### Added
 - Initial release
 - {args.description}
+- Start mode: {args.start_mode}
 """
         with open('CHANGELOG.MD', 'w', encoding='utf-8') as f:
             f.write(changelog_content)

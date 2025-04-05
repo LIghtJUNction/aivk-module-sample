@@ -13,9 +13,16 @@ on:
 jobs:
   package:
     runs-on: ubuntu-latest
+    # 添加权限设置
+    permissions:
+      contents: write
+      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          # 获取完整历史以确保不会发生冲突
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -49,11 +56,10 @@ jobs:
           git tag -a v${{ github.event.inputs.version }} -m "Version ${{ github.event.inputs.version }}"
           
       - name: Push changes and tags
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
-          tags: true
+        # 使用内置的 Git 命令推送更改，避免使用第三方 Action
+        run: |
+          git push origin HEAD:${{ github.ref }} --force
+          git push origin --tags --force
           
       - name: Create Release
         id: create_release
