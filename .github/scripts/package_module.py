@@ -91,6 +91,25 @@ def refresh_dependencies():
         print("尝试安装 uv: pip install uv")
         return False
 
+def find_license_files():
+    """查找项目中的许可证文件"""
+    license_patterns = [
+        'LICENSE*', 'License*', 'license*', 
+        'COPYING*', 'Copying*', 'copying*',
+        'COPYRIGHT*', 'Copyright*', 'copyright*'
+    ]
+    
+    license_files = []
+    for pattern in license_patterns:
+        license_files.extend(glob.glob(pattern))
+    
+    if license_files:
+        print(f"找到许可证相关文件: {', '.join(license_files)}")
+    else:
+        print("未找到许可证文件，仅使用 meta.toml 中的许可证类型信息")
+    
+    return license_files
+
 def main():
     parser = argparse.ArgumentParser(description='Package AIVK module')
     parser.add_argument('--version', required=True, help='New version number')
@@ -159,6 +178,9 @@ def main():
         for platform_name, arch in platforms_archs:
             create_executable(module_id, platform_name, arch)
     
+    # 查找许可证文件
+    license_files = find_license_files()
+    
     # 准备打包文件列表
     files_to_package = [
         'meta.toml',
@@ -166,16 +188,21 @@ def main():
         f"{module_id}.py" if os.path.exists(f"{module_id}.py") else None,
         'pyproject.toml' if os.path.exists('pyproject.toml') else None,
         'README.md' if os.path.exists('README.md') else None,
-        'LICENSE' if os.path.exists('LICENSE') else None,
         'CHANGELOG.MD' if os.path.exists('CHANGELOG.MD') else None
     ]
     
+    # 添加许可证文件
+    files_to_package.extend(license_files)
+    
     # 过滤掉不存在的文件
-    files_to_package = [f for f in files_to_package if f]
+    files_to_package = [f for f in files_to_package if f and os.path.exists(f)]
     
     # 添加可能存在的其他必要文件
     for pattern in ['requirements.txt', '*.png', '*.jpg', '*.ico']:
-        files_to_package.extend(glob.glob(pattern))
+        matching_files = glob.glob(pattern)
+        for file in matching_files:
+            if file not in files_to_package:
+                files_to_package.append(file)
     
     # 创建ZIP文件
     zip_filename = f"{module_id}.zip"
@@ -184,6 +211,7 @@ def main():
         for file in files_to_package:
             if os.path.exists(file):
                 zipf.write(file)
+                print(f"添加文件到压缩包: {file}")
         
         # 添加bin目录下的可执行文件
         bin_dir = "bin"
@@ -192,6 +220,7 @@ def main():
                 for file in files:
                     file_path = os.path.join(root, file)
                     zipf.write(file_path)
+                    print(f"添加可执行文件到压缩包: {file_path}")
     
     # 更新 update.json
     repo_owner_name = os.environ.get('GITHUB_REPOSITORY', '').split('/')
@@ -259,6 +288,7 @@ def main():
     print(f"模块已打包为: {zip_filename}")
     print(f"版本: {args.version}")
     print(f"版本代号: {version_code}")
+    print(f"许可证类型: {meta_data.get('license', '未指定')}")
     
     # 清理临时文件和目录
     temp_dirs = ["build", "__pycache__", ".pytest_cache"]

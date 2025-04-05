@@ -35,11 +35,6 @@ class Entry(LKM):
         logger.info("You can implement your own module here.")
         logger.info("Please refer to the documentation for more information.")
         
-        # 可以访问配置文件
-        config = cls.get_config()
-        if config and "database" in config and config["database"].get("enabled", False):
-            logger.info("数据库已启用")
-            logger.info(f"数据库端口: {config.get('database', {}).get('ports', [])}")
 
     @classmethod
     async def _onUnload(cls):
