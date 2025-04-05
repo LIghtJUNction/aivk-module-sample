@@ -7,8 +7,18 @@ on:
         description: '版本号 (例如: 0.1.0)'
         required: true
       changelog:
-        description: '更新日志'
-        required: true
+        description: '更新日志 (留空则自动使用 CHANGELOG.MD 中的内容)'
+        required: false
+      skip_executables:
+        description: '跳过构建可执行文件'
+        required: false
+        default: false
+        type: boolean
+      skip_dependencies:
+        description: '跳过刷新依赖'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   package:
@@ -32,14 +42,31 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install toml python-dateutil
+          pip install toml python-dateutil pyinstaller
+          pip install uv
 
       - name: Package module
         id: package
         run: |
-          python .github/scripts/package_module.py \
-            --version "${{ github.event.inputs.version }}" \
-            --changelog "${{ github.event.inputs.changelog }}"
+          # 准备参数
+          ARGS=""
+          if [ "${{ github.event.inputs.changelog }}" != "" ]; then
+            ARGS="${ARGS} --changelog \"${{ github.event.inputs.changelog }}\""
+          fi
+          
+          if [ "${{ github.event.inputs.skip_executables }}" == "true" ]; then
+            ARGS="${ARGS} --skip-executables"
+          fi
+          
+          if [ "${{ github.event.inputs.skip_dependencies }}" == "true" ]; then
+            ARGS="${ARGS} --skip-dependencies"
+          fi
+          
+          # 运行打包脚本
+          python .github/scripts/package_module.py --version "${{ github.event.inputs.version }}" ${ARGS}
+          
+          # 设置输出
+          echo "::set-output name=module_id::$(cat meta.toml | grep id | head -1 | cut -d'"' -f2)"
         
       - name: Set up Git
         run: |
@@ -48,7 +75,8 @@ jobs:
       
       - name: Commit changes
         run: |
-          git add meta.toml update.json
+          git add meta.toml update.json CHANGELOG.MD
+          git add bin/ || echo "No bin directory to add"
           git commit -m "Release version ${{ github.event.inputs.version }}"
       
       - name: Create tag
@@ -67,7 +95,7 @@ jobs:
         with:
           tag_name: v${{ github.event.inputs.version }}
           name: Release v${{ github.event.inputs.version }}
-          body: ${{ github.event.inputs.changelog }}
+          body: ${{ env.CHANGELOG || steps.package.outputs.changelog || github.event.inputs.changelog || format('版本 {0} 发布', github.event.inputs.version) }}
           draft: false
           prerelease: false
           files: ./*.zip
