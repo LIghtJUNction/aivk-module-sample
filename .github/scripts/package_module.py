@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import platform
 import sys
+import hashlib
 from pathlib import Path
 
 def extract_latest_changelog(changelog_file):
@@ -29,6 +30,14 @@ def extract_latest_changelog(changelog_file):
     except Exception as e:
         print(f"读取 CHANGELOG.MD 时出错: {e}")
         return None
+
+def calculate_file_hash(filename, hash_type="sha256"):
+    """计算文件的哈希值"""
+    hash_func = hashlib.new(hash_type)
+    with open(filename, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_func.update(chunk)
+    return hash_func.hexdigest()
 
 def create_executable(module_id, target_platform, target_arch=None):
     """为指定平台创建可执行文件"""
@@ -181,14 +190,24 @@ def main():
     # 查找许可证文件
     license_files = find_license_files()
     
-    # 准备打包文件列表
+    # 准备打包文件列表 - 按新标准包含指定文件和目录
     files_to_package = [
+        # 必需的配置和元数据文件
         'meta.toml',
         'config.toml' if os.path.exists('config.toml') else None,
-        f"{module_id}.py" if os.path.exists(f"{module_id}.py") else None,
         'pyproject.toml' if os.path.exists('pyproject.toml') else None,
+        
+        # 主模块文件 (id.py)
+        f"{module_id}.py" if os.path.exists(f"{module_id}.py") else None,
+        
+        # 文档文件
         'README.md' if os.path.exists('README.md') else None,
-        'CHANGELOG.MD' if os.path.exists('CHANGELOG.MD') else None
+        'README.MD' if os.path.exists('README.MD') else None,
+        'CHANGELOG.md' if os.path.exists('CHANGELOG.md') else None,
+        'CHANGELOG.MD' if os.path.exists('CHANGELOG.MD') else None,
+        
+        # Python 版本信息
+        '.python-version' if os.path.exists('.python-version') else None
     ]
     
     # 添加许可证文件
@@ -216,25 +235,40 @@ def main():
         # 添加bin目录下的可执行文件
         bin_dir = "bin"
         if os.path.exists(bin_dir):
-            for root, _, files in os.walk(bin_dir):
+            for root, dirs, files in os.walk(bin_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
                     zipf.write(file_path)
                     print(f"添加可执行文件到压缩包: {file_path}")
+        
+        # 添加cli目录及其内容
+        cli_dir = "cli"
+        if os.path.exists(cli_dir):
+            for root, dirs, files in os.walk(cli_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    zipf.write(file_path)
+                    print(f"添加CLI文件到压缩包: {file_path}")
+    
+    # 计算压缩包的哈希值
+    zip_hash = calculate_file_hash(zip_filename)
+    zip_size = os.path.getsize(zip_filename) / 1024  # 转换为KB
     
     # 更新 update.json
     repo_owner_name = os.environ.get('GITHUB_REPOSITORY', '').split('/')
     if len(repo_owner_name) == 2:
         repo_owner, repo_name = repo_owner_name
     else:
-        repo_owner = 'owner'
+        repo_owner = 'light'
         repo_name = module_id
     
     update_json = {
         "version": args.version,
         "versionCode": version_code,
         "zipUrl": f"https://github.com/{repo_owner}/{repo_name}/releases/download/v{args.version}/{module_id}.zip",
-        "changelog": f"https://github.com/{repo_owner}/{repo_name}/blob/main/CHANGELOG.MD"
+        "changelog": f"https://github.com/{repo_owner}/{repo_name}/blob/main/CHANGELOG.MD",
+        "sha256": zip_hash,
+        "size": round(zip_size, 2)
     }
     
     with open('update.json', 'w', encoding='utf-8') as f:
@@ -249,6 +283,24 @@ def main():
             print(f"使用 CHANGELOG.MD 中的最新更新日志")
         else:
             changelog_content = f"版本 {args.version} 发布"
+    
+    # 创建包含哈希值的发布说明
+    release_notes = (
+        f"## {module_id} v{args.version} (版本代号: {version_code})\n\n"
+        f"{changelog_content or f'版本 {args.version} 发布'}\n\n"
+        f"### 下载信息\n\n"
+        f"- 文件: [{module_id}.zip]({update_json['zipUrl']})\n"
+        f"- 大小: {round(zip_size, 2)} KB\n"
+        f"- SHA256: `{zip_hash}`\n\n"
+        f"### 构建信息\n\n"
+        f"- 构建时间: {now.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        f"- Python版本: {open('.python-version').read().strip() if os.path.exists('.python-version') else '未指定'}\n"
+    )
+    
+    # 将发布说明保存到文件
+    release_notes_file = 'RELEASE_NOTES.md'
+    with open(release_notes_file, 'w', encoding='utf-8') as f:
+        f.write(release_notes)
     
     # 更新 CHANGELOG.MD
     if os.path.exists('CHANGELOG.MD') and args.changelog:
@@ -279,16 +331,30 @@ def main():
     os.environ['VERSION'] = args.version
     os.environ['VERSION_CODE'] = str(version_code)
     os.environ['CHANGELOG'] = changelog_content or f"版本 {args.version} 发布"
+    os.environ['SHA256'] = zip_hash
+    os.environ['FILE_SIZE'] = str(round(zip_size, 2))
+    os.environ['RELEASE_NOTES'] = release_notes
     
     print(f"::set-output name=module_id::{module_id}")
     print(f"::set-output name=version::{args.version}")
     print(f"::set-output name=version_code::{version_code}")
     print(f"::set-output name=changelog::{changelog_content or f'版本 {args.version} 发布'}")
+    print(f"::set-output name=sha256::{zip_hash}")
+    print(f"::set-output name=file_size::{round(zip_size, 2)}")
+    print(f"::set-output name=release_notes_file::{release_notes_file}")
     
-    print(f"模块已打包为: {zip_filename}")
+    print(f"\n打包内容摘要:")
+    print(f"模块ID: {module_id}")
     print(f"版本: {args.version}")
     print(f"版本代号: {version_code}")
     print(f"许可证类型: {meta_data.get('license', '未指定')}")
+    print(f"包含CLI目录: {'是' if os.path.exists('cli') else '否'}")
+    print(f"包含bin目录: {'是' if os.path.exists('bin') else '否'}")
+    print(f"Python版本: {open('.python-version').read().strip() if os.path.exists('.python-version') else '未指定'}")
+    print(f"压缩包大小: {round(zip_size, 2)} KB")
+    print(f"SHA256: {zip_hash}")
+    print(f"\n模块已打包为: {zip_filename}")
+    print(f"发布说明已保存至: {release_notes_file}")
     
     # 清理临时文件和目录
     temp_dirs = ["build", "__pycache__", ".pytest_cache"]
