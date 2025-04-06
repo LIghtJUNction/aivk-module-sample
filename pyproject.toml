@@ -10,9 +10,3 @@ dependencies = [ "aivk>=0.1.0",]
 name = "LIghtJUNction"
 email = "LIghtJUNction.me@gmail.com"
 
-[build-system]
-requires = [ "setuptools>=77.0.0", "wheel",]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.package-dir]
-"" = "."
